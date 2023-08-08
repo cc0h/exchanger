@@ -2,7 +2,7 @@
 
 void Exchanger::onInit()
 {
-    img_subscriber_= nh_.subscribe("/hk_camera/camera/image_raw", 1, &Exchanger::receiveFromCam,this);
+    img_subscriber_= nh_.subscribe("/hk_camera/image_raw/compressed", 1, &Exchanger::receiveFromCam,this);
     tf_updated_subscriber_ = nh_.subscribe("/is_update_exchanger", 1, &Exchanger::receiveFromEng, this);
     binary_publisher_ = nh_.advertise<sensor_msgs::Image>("exchanger_binary_publisher", 1);
     segmentation_publisher_ = nh_.advertise<sensor_msgs::Image>("exchanger_segmentation_publisher", 1);
@@ -128,7 +128,7 @@ void Exchanger::receiveFromEng(const std_msgs::BoolConstPtr &signal)
     tf_update_ = is_update;
 }
 
-void Exchanger::receiveFromCam(const sensor_msgs::ImageConstPtr& msg)
+void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
 {
     cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
     imgProcess();
