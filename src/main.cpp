@@ -245,7 +245,7 @@ void Exchanger::getPnP(const cv::Mat &rvec,const cv::Mat &tvec)
     }
     catch (tf2::TransformException& ex)
     {
-        ROS_INFO_STREAM("tf error from ros");
+        //ROS_INFO_STREAM("tf error from ros");
         return;
     }
 
