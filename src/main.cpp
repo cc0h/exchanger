@@ -131,7 +131,7 @@ void Exchanger::receiveFromEng(const std_msgs::BoolConstPtr &signal)
 
 void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
 {
-    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
+    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8);
     imgProcess();
     segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
     ros::Duration(0.1).sleep();
@@ -365,7 +365,7 @@ void Exchanger::combinationSolver(const std::vector<cv::Point2i> &inline_points_
 
 bool Exchanger::findRectPoints(std::vector<cv::Point2i> &rect_points_vec, const std::vector<cv::Point2i> &inline_points_vec, std::vector<cv::Point2i> &combination_result_vec)
 {
-    if (inline_points_vec.size() < 5 || inline_points_vec.size() > 7)
+    if (inline_points_vec.size() < 5 || inline_points_vec.size() > 9)
         return false;
     std::vector<std::pair<std::vector<cv::Point2i>,double>> point_variance_vec;
     std::vector<cv::Point2i> combination_vec;
@@ -443,7 +443,8 @@ void Exchanger::imgProcess() {
     tmp_hull_vec = hull_vec;
     std::sort(tmp_hull_vec.begin(),tmp_hull_vec.end(),[](const auto &v1,const auto &v2){return cv::contourArea(v1)>cv::contourArea(v2);});
     bool polygon_signal = false;
-    if(!tmp_hull_vec.empty()) polygon_signal = inline_points_vec.size()==4 && cv::contourArea(tmp_hull_vec[0])<3*cv::contourArea(tmp_hull_vec[1]);
+    if(!tmp_hull_vec.empty()) polygon_signal = inline_points_vec.size() == 4 &&
+            cv::contourArea(tmp_hull_vec[0]) < 3 * cv::contourArea(tmp_hull_vec[1]);
 
     std::vector<cv::Point2i> combination_result_vec;
     bool rect_signal = findRectPoints(rect_points_vec, inline_points_vec, combination_result_vec);
@@ -485,6 +486,8 @@ void Exchanger::imgProcess() {
         shape_signal_ = true;
         getPnP(exchanger_rvec_,exchanger_tvec_);
     }
+
+    /*
     else if (!hull_vec.empty() && checkArrow(hull_vec) && cv::contourArea(hull_vec[0]) > arrow_area_threshold_ && tf_update_)
     {
         std::vector<cv::Point2f> approx_points;
@@ -538,6 +541,8 @@ void Exchanger::imgProcess() {
             poseNonSensePnP();
         }
     }
+     */
+
     else if (rect_signal && tf_update_)
     {
         cv::RotatedRect rotate_rect=cv::minAreaRect(combination_result_vec);
