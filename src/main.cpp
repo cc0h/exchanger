@@ -131,7 +131,7 @@ void Exchanger::receiveFromEng(const std_msgs::BoolConstPtr &signal)
 
 void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
 {
-    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8);
+    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
     imgProcess();
     segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
     ros::Duration(0.1).sleep();
