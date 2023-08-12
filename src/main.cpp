@@ -2,8 +2,8 @@
 
 void Exchanger::onInit()
 {
-    img_subscriber_= nh_.subscribe("/hk_camera/image_raw/compressed", 1, &Exchanger::receiveFromCam,this);
-//    img_subscriber_= nh_.subscribe("/hk_camera/image_raw", 1, &Exchanger::receiveFromCam,this);
+//    img_subscriber_= nh_.subscribe("/hk_camera/image_raw/compressed", 1, &Exchanger::receiveFromCam,this);
+    img_subscriber_= nh_.subscribe("/hk_camera/camera/image_raw", 1, &Exchanger::receiveFromCam,this);
     tf_updated_subscriber_ = nh_.subscribe("/is_update_exchanger", 1, &Exchanger::receiveFromEng, this);
     binary_publisher_ = nh_.advertise<sensor_msgs::Image>("exchanger_binary_publisher", 1);
     segmentation_publisher_ = nh_.advertise<sensor_msgs::Image>("exchanger_segmentation_publisher", 1);
@@ -129,21 +129,21 @@ void Exchanger::receiveFromEng(const std_msgs::BoolConstPtr &signal)
     tf_update_ = is_update;
 }
 
-void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
-{
-    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
-    imgProcess();
-    segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
-    ros::Duration(0.1).sleep();
-}
-
-//void Exchanger::receiveFromCam(const sensor_msgs::ImageConstPtr& msg)
+//void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
 //{
 //    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
 //    imgProcess();
 //    segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
 //    ros::Duration(0.1).sleep();
 //}
+
+void Exchanger::receiveFromCam(const sensor_msgs::ImageConstPtr& msg)
+{
+    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
+    imgProcess();
+    segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
+    ros::Duration(0.1).sleep();
+}
 void Exchanger::getTemplateImg()
 {
     cv::Mat gray_img;
