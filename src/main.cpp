@@ -2,6 +2,7 @@
 
 void Exchanger::onInit()
 {
+//    img_subscriber_= nh_.subscribe("/hk_camera/image_raw/compressed", 1, &Exchanger::receiveFromCam,this);
     img_subscriber_= nh_.subscribe("/hk_camera/camera/image_raw", 1, &Exchanger::receiveFromCam,this);
     tf_updated_subscriber_ = nh_.subscribe("/is_update_exchanger", 1, &Exchanger::receiveFromEng, this);
     binary_publisher_ = nh_.advertise<sensor_msgs::Image>("exchanger_binary_publisher", 1);
@@ -128,6 +129,14 @@ void Exchanger::receiveFromEng(const std_msgs::BoolConstPtr &signal)
     tf_update_ = is_update;
 }
 
+//void Exchanger::receiveFromCam(const sensor_msgs::CompressedImageConstPtr & msg)
+//{
+//    cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
+//    imgProcess();
+//    segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
+//    ros::Duration(0.1).sleep();
+//}
+
 void Exchanger::receiveFromCam(const sensor_msgs::ImageConstPtr& msg)
 {
     cv_image_ = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8);
@@ -135,7 +144,6 @@ void Exchanger::receiveFromCam(const sensor_msgs::ImageConstPtr& msg)
     segmentation_publisher_.publish(cv_bridge::CvImage(std_msgs::Header(),cv_image_->encoding , cv_image_->image).toImageMsg());
     ros::Duration(0.1).sleep();
 }
-
 void Exchanger::getTemplateImg()
 {
     cv::Mat gray_img;
@@ -245,7 +253,7 @@ void Exchanger::getPnP(const cv::Mat &rvec,const cv::Mat &tvec)
     }
     catch (tf2::TransformException& ex)
     {
-        ROS_INFO_STREAM("tf error from ros");
+        //ROS_INFO_STREAM("tf error from ros");
         return;
     }
 
@@ -357,7 +365,7 @@ void Exchanger::combinationSolver(const std::vector<cv::Point2i> &inline_points_
 
 bool Exchanger::findRectPoints(std::vector<cv::Point2i> &rect_points_vec, const std::vector<cv::Point2i> &inline_points_vec, std::vector<cv::Point2i> &combination_result_vec)
 {
-    if (inline_points_vec.size() < 5 || inline_points_vec.size() > 7)
+    if (inline_points_vec.size() < 5 || inline_points_vec.size() > 9)
         return false;
     std::vector<std::pair<std::vector<cv::Point2i>,double>> point_variance_vec;
     std::vector<cv::Point2i> combination_vec;
@@ -435,7 +443,8 @@ void Exchanger::imgProcess() {
     tmp_hull_vec = hull_vec;
     std::sort(tmp_hull_vec.begin(),tmp_hull_vec.end(),[](const auto &v1,const auto &v2){return cv::contourArea(v1)>cv::contourArea(v2);});
     bool polygon_signal = false;
-    if(!tmp_hull_vec.empty()) polygon_signal = inline_points_vec.size()==4 && cv::contourArea(tmp_hull_vec[0])<3*cv::contourArea(tmp_hull_vec[1]);
+    if(!tmp_hull_vec.empty()) polygon_signal = inline_points_vec.size() == 4 &&
+            cv::contourArea(tmp_hull_vec[0]) < 3 * cv::contourArea(tmp_hull_vec[1]);
 
     std::vector<cv::Point2i> combination_result_vec;
     bool rect_signal = findRectPoints(rect_points_vec, inline_points_vec, combination_result_vec);
@@ -477,6 +486,8 @@ void Exchanger::imgProcess() {
         shape_signal_ = true;
         getPnP(exchanger_rvec_,exchanger_tvec_);
     }
+
+    /*
     else if (!hull_vec.empty() && checkArrow(hull_vec) && cv::contourArea(hull_vec[0]) > arrow_area_threshold_ && tf_update_)
     {
         std::vector<cv::Point2f> approx_points;
@@ -530,6 +541,8 @@ void Exchanger::imgProcess() {
             poseNonSensePnP();
         }
     }
+     */
+
     else if (rect_signal && tf_update_)
     {
         cv::RotatedRect rotate_rect=cv::minAreaRect(combination_result_vec);

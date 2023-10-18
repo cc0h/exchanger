@@ -29,6 +29,7 @@ class Exchanger
 {
 public:
     void onInit();
+//    void receiveFromCam(const sensor_msgs::CompressedImageConstPtr &image);
     void receiveFromCam(const sensor_msgs::ImageConstPtr &image);
     void receiveFromEng(const std_msgs::BoolConstPtr &signal);
     void dynamicCallback(exchanger::dynamicConfig& config);
